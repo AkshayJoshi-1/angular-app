@@ -1,4 +1,6 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Subscription } from 'rxjs';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
 import { Ingredient } from 'src/app/shared/ingredient.model';
 import { ShoppingService } from '../shopping.service';
 
@@ -7,19 +9,57 @@ import { ShoppingService } from '../shopping.service';
   templateUrl: './shopping-edit.component.html',
   styleUrls: ['./shopping-edit.component.css']
 })
-export class ShoppingEditComponent implements OnInit {
+export class ShoppingEditComponent implements OnInit, OnDestroy {
 
-  @ViewChild('nameInput', {static: false}) nameInput: ElementRef;
-  @ViewChild('amountInput', {static: false}) amountInput: ElementRef;
+  @ViewChild('f', {static: false}) editForm: NgForm;
+
+  editMode: boolean;
+  editedItemIndex: number;
+  subscription: Subscription;
+  editedItem: Ingredient;
 
   constructor(private shoppingService: ShoppingService) { }
 
-  ngOnInit(): void {
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
   }
 
-  onItemAdded() {
-   this.shoppingService.addIngredient(new Ingredient(
-        this.nameInput.nativeElement.value, this.amountInput.nativeElement.value));
+  ngOnInit(): void {
+    this.subscription = this.shoppingService.startedEditing
+      .subscribe(
+        (index: number) => {
+          this.editedItemIndex = index;
+          this.editMode = true;
+          this.editedItem = this.shoppingService.getIngredient(index);
+
+          this.editForm.setValue({
+            name: this.editedItem.name,
+            amount: this.editedItem.amount
+          });
+        }
+    );
+  }
+
+  onItemAdded(form: NgForm): void {
+    const value = form.value;
+
+    if (!this.editMode) {
+      this.shoppingService.addIngredient(new Ingredient(value.name, value.amount));
+    } else {
+      this.shoppingService.updateIngredient(this.editedItemIndex, value);
+    }
+
+    this.clearForm();
+  }
+
+  clearForm(): void {
+    this.editForm.reset();
+    this.editMode = false;
+  }
+
+  deleteItem(): void {
+    this.shoppingService.deleteIngredient(this.editedItemIndex);
+    this.clearForm();
   }
 
 }
