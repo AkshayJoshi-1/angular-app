@@ -9,20 +9,22 @@ export class RecipeService {
 
     recipesChanged = new Subject<Recipe[]>();
 
-    recipes: Recipe[] = [
-        new Recipe('Test Recipe 1',
-            'Recipe Description 1',
-            'https://picturetherecipe.com/wp-content/uploads/2020/04/PictureTheRecipe-Butter-Chicken.jpg',
-            [
-                new Ingredient('Bread', 1), new Ingredient('Meat', 2)
-            ]),
-        new Recipe('Test Recipe 2',
-            'Recipe Description 2',
-            'https://picturetherecipe.com/wp-content/uploads/2020/04/PictureTheRecipe-Butter-Chicken.jpg',
-            [
-                new Ingredient('Apple', 1), new Ingredient('Sugar', 3)
-            ])
-    ];
+    // recipes: Recipe[] = [
+    //     new Recipe('Test Recipe 1',
+    //         'Recipe Description 1',
+    //         'https://picturetherecipe.com/wp-content/uploads/2020/04/PictureTheRecipe-Butter-Chicken.jpg',
+    //         [
+    //             new Ingredient('Bread', 1), new Ingredient('Meat', 2)
+    //         ]),
+    //     new Recipe('Test Recipe 2',
+    //         'Recipe Description 2',
+    //         'https://picturetherecipe.com/wp-content/uploads/2020/04/PictureTheRecipe-Butter-Chicken.jpg',
+    //         [
+    //             new Ingredient('Apple', 1), new Ingredient('Sugar', 3)
+    //         ])
+    // ];
+
+    recipes: Recipe[] = [];
 
     constructor(private shoppingService: ShoppingService) {}
 
@@ -50,6 +52,11 @@ export class RecipeService {
 
     deleteRecipe(index: number): void {
       this.recipes.splice(index, 1);
+      this.recipesChanged.next(this.recipes.slice());
+    }
+
+    setRecipes(recipes: Recipe[]): void {
+      this.recipes = recipes;
       this.recipesChanged.next(this.recipes.slice());
     }
 }
