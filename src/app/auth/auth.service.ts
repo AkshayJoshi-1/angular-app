@@ -9,6 +9,7 @@ export interface AuthResponse {
   emailId: string;
   isAuthenticated: boolean;
   accessToken: string;
+  expirationDuration: number;
 }
 
 @Injectable({
@@ -92,9 +93,9 @@ export class AuthService {
       response.emailId,
       response.emailId,
       response.accessToken,
-      new Date(new Date().getTime() + (3600 * 1000))
+      new Date(new Date().getTime() + response.expirationDuration)
     );
-    this.autoLogout(3600 * 1000);
+    this.autoLogout(response.expirationDuration);
     this.user.next(user);
     localStorage.setItem('userData', JSON.stringify(user));
   }
