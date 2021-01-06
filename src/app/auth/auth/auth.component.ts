@@ -1,8 +1,10 @@
+import { PlaceholderDirective } from './../../shared/placeholder/placeholder.directive';
+import { AlertComponent } from './../../shared/alert/alert.component';
 import { Router } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { AuthService, AuthResponse } from './../auth.service';
 import { NgForm } from '@angular/forms';
-import { Component, OnInit } from '@angular/core';
+import { Component, ComponentFactoryResolver, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { formatCurrency } from '@angular/common';
 
 @Component({
@@ -10,14 +12,23 @@ import { formatCurrency } from '@angular/common';
   templateUrl: './auth.component.html',
   styleUrls: ['./auth.component.css']
 })
-export class AuthComponent implements OnInit {
+export class AuthComponent implements OnInit, OnDestroy {
 
   isLoginMode = true;
   isLoading = false;
   error: string = null;
+  alertSub: Subscription;
+  @ViewChild(PlaceholderDirective, {static: false}) alertHost: PlaceholderDirective;
 
   constructor(private authService: AuthService,
-              private router: Router) { }
+              private router: Router,
+              private componentFactoryResolver: ComponentFactoryResolver) { }
+
+  ngOnDestroy(): void {
+    if (this.alertSub) {
+      this.alertSub.unsubscribe();
+    }
+  }
 
   ngOnInit(): void {
   }
@@ -54,9 +65,27 @@ export class AuthComponent implements OnInit {
       }, errorResponse => {
         console.log(errorResponse);
         this.error = errorResponse.error;
+        this.showErrorAlert(this.error);
         this.isLoading = false;
       });
 
     form.reset();
+  }
+
+  private showErrorAlert(error: string): void {
+
+    const alertComponentFactory = this.componentFactoryResolver.resolveComponentFactory(AlertComponent);
+
+    const hostViewContainerRef = this.alertHost.viewContainerRef;
+
+    hostViewContainerRef.clear();
+
+    const componentRef = hostViewContainerRef.createComponent(alertComponentFactory);
+    componentRef.instance.message = error;
+    this.alertSub = componentRef.instance.close.subscribe(() => {
+      this.alertSub.unsubscribe();
+      hostViewContainerRef.clear();
+    });
+
   }
 }
